@@ -1,0 +1,74 @@
+*{
+    box-sizing: border-box;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+    background-color: black;
+}
+
+main{
+    height: 100dvh;
+    width: 100dvw;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.btn-text {
+    text-decoration: underline;
+}
+
+.form-control, .form-control:focus
+ {
+    background-color:  #ffffff00!important;
+    color: #ffffff;
+  }
+
+
+
+.form-floating>.form-control-plaintext~label, 
+.form-floating>.form-control:focus~label, 
+.form-floating>.form-control:not(:placeholder-shown)~label, 
+.form-floating>.form-select~label
+{
+color: rgb(201, 201, 201) !important;
+}
+
+.form-floating>.form-control-plaintext~label::after, 
+.form-floating>.form-control:focus~label::after, 
+.form-floating>.form-control:not(:placeholder-shown)~label::after, 
+.form-floating>.form-select~label::after
+{
+    background-color: transparent !important;
+}
+
+.body-bg {
+    position: absolute;
+    z-index: -1;
+    height: 100dvh;
+    width: 100dvw;
+    object-fit: cover;
+    opacity: .8;
+}
+
+.btn-label {
+	position: relative;
+	left: -8px;
+	display: inline-block;
+	padding: 10px 6px ;
+	/* background: rgba(0, 0, 0, 0.15); */
+	/* border-radius: 3px 0 0 3px; */
+}
+
+.btn-labeled {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.btn {
+	margin-bottom: 10px;
+}
