@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,15 +9,15 @@
         integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
         integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="../static/main.css">
 </head>
 
 <body class="text-white">
-    <img class="body-bg" src="images/bg2.jpg" alt="">
+    <img class="body-bg" src="../static/images/bg2.jpg" alt="">
     <main class="container-sm d-flex flex-column justify-content-center align-items-center">
         <h1 class="display-1 text-center text-bold"> Login</h1>
         <p class="text-center fs-4 pb-5 pt-2 fw-lighter">Login to your account</p>
-        <form action="" method="post" class="col-12 col-sm-10 col-lg-6 col-xl-4 text-white form">
+        <form action="/home" method="post" class="col-12 col-sm-10 col-lg-6 col-xl-4 text-white form">
 
             <div class="form-floating mb-3">
                 <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
@@ -43,7 +44,7 @@
             </div>
             <div class="d-grid text-center">
                 <span>New here?
-                    <a class="btn-text d-inline text-center" href="signup.html"> Create new account</a>
+                    <a class="btn-text d-inline text-center" href="/signup"> Create new account</a>
                 </span>
             </div>
         </form>

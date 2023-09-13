@@ -52,7 +52,7 @@ color: rgb(201, 201, 201) !important;
     height: 100dvh;
     width: 100dvw;
     object-fit: cover;
-    opacity: .8;
+    opacity: .7;
 }
 
 .btn-label {
