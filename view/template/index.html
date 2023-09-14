@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,18 +14,16 @@
 <body class="text-white">
     <img class="body-bg" src="view/static/images/bg.jpg" alt="">
     <main class="container-sm d-flex flex-column justify-content-center align-items-center">
-        <h1 class="display-1 text-center text-bold mt-5"> Hello, Good morning<br> {{.}}</h1>
+        <h1 class="display-1 text-center text-bold mt-5"> Hello, Good morning<br> {{ .Name }}</h1>
         <p class="text-center fs-4 pb-5 pt-2 fw-lighter">Were you expecting something 😅 See you later!</p>
         <form action="/logout" method="post">
             <button type="submit" class="btn btn-labeled btn-outline-light btn-lg">
                 <span><i class=" fa fa-sign-out btn-label"></i>Logout</span>
             </button>
         </form>
-
     </main>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js"
         integrity="sha384-Rx+T1VzGupg4BHQYs2gCW9It+akI2MM/mndMCy36UVfodzcJcF0GGLxZIzObiEfa"
         crossorigin="anonymous"></script>
 </body>
-
 </html>

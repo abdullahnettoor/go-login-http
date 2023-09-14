@@ -17,26 +17,25 @@
     <main class="container-sm d-flex flex-column justify-content-center align-items-center">
         <h1 class="display-1 text-center text-bold"> Login</h1>
         <p class="text-center fs-4 pb-5 pt-2 fw-lighter">Login to your account</p>
-        <form action="/home" method="post" class="col-12 col-sm-10 col-lg-6 col-xl-4 text-white form">
+        <form action="/login-post" method="post" class="col-12 col-sm-10 col-lg-6 col-xl-4 text-white form">
 
             <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+                <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com" required>
                 <label for="floatingInput" class="floating-input">Email address</label>
                 <div class="text-end" >
                     <p class="text-danger d-inline "></p>
-                    <p class="text-warning d-inline"></p>
+                    <!-- <p class="text-warning d-inline"></p> -->
                 </div>
             </div>
             <div class="form-floating mb-2">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+                <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password" required>
                 <label for="floatingPassword" class="floating-input">Password</label>
-                <div class="text-end" >
-                    <p class="text-danger d-inline "></p>
-                    <p class="text-warning d-inline"></p>
+                <div class="text-end">
+                    <p class="text-danger d-inline">{{ . }}</p>
                 </div>
             </div>
             <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="exampleCheck1">
+                <input type="checkbox" name="stay-loggedin" class="form-check-input" id="exampleCheck1">
                 <label class="form-check-label" for="exampleCheck1">Keep me logged in</label>
             </div>
             <div class="mb-3 d-grid">

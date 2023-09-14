@@ -15,12 +15,12 @@
 <body class="text-white">
     <img class="body-bg" src="view/static/images/bg2.jpg" alt="">
     <main class="container-sm d-flex flex-column justify-content-center align-items-center">
-        <h1 class="display-1 text-center text-bold"> Sign Up {{ . }}</h1>
+        <h1 class="display-1 text-center text-bold"> Sign Up</h1>
         <p class="text-center fs-4 pb-5 pt-2 fw-lighter">Create new account</p>
-        <form action="" method="post" class="col-12 col-sm-10 col-lg-6 col-xl-4 text-white form">
+        <form action="signup-post" method="post" class="col-12 col-sm-10 col-lg-6 col-xl-4 text-white form">
 
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="floatingInput" placeholder="name@example.com">
+                <input type="text" name="name" class="form-control" id="floatingInput">
                 <label for="floatingInput" class="floating-input">Full Name</label>
                 <div class="text-end" >
                     <p class="text-danger d-inline "></p>
@@ -28,7 +28,7 @@
                 </div>
             </div>
             <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+                <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com">
                 <label for="floatingInput" class="floating-input">Email address</label>
                 <div class="text-end" >
                     <p class="text-danger d-inline "></p>
@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+                <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
                 <label for="floatingPassword" class="floating-input">Password</label>
                 <div class="text-end" >
                     <p class="text-danger d-inline "></p>
@@ -44,14 +44,14 @@
                 </div>
             </div>
             <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+                <input type="password" name="confirm-password" class="form-control" id="floatingConfirmPassword" placeholder="Password">
                 <label for="floatingPassword" class="floating-input">Confirm Password</label>
                 <div class="text-end" >
-                    <p class="text-danger d-inline "></p>
                     <p class="text-warning d-inline"></p>
                 </div>
             </div>
             <div class="mb-3 d-grid">
+                <p class="text-danger d-inline ">{{ . }}</p>
                 <button type="submit" class="btn btn-primary">Sign Up</button>
             </div>
 
