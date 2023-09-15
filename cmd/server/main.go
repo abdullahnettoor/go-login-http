@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,12 +23,41 @@ var user User
 
 var tmpl *template.Template
 
+type session struct {
+	username string
+	expiry   time.Time
+}
+
+func (s session) isExpired() bool {
+	return s.expiry.Before(time.Now())
+}
+
+var sessions = map[string]session{}
+
+func createSession(u User) (sessionToken string, expiresAt time.Time) {
+	sessionToken = uuid.NewString()
+	expiresAt = time.Now().Add(time.Hour)
+	sessions[sessionToken] = session{
+		username: u.Name,
+		expiry:   expiresAt,
+	}
+	return
+}
+
+func clearCache(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, no-transform, must-revalidate, private, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("X-Accel-Expires", "0")
+
+}
+
 func hashPassword(password string) string {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashed)
+
 }
 
-func checkPassword(password string) bool {
+func comparePassword(password string) bool {
 	v := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if v == nil {
 		return true
@@ -36,30 +67,125 @@ func checkPassword(password string) bool {
 }
 
 func getHome(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Home Loaded")
-	tmpl.ExecuteTemplate(w, "index.html", "Abdullah Nettoor")
+	clearCache(w, r)
+
+	// Check if cookie exists
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+		tmpl.ExecuteTemplate(w, "login.html", "Login to see home")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	sessionToken := c.Value
+
+	userSession, exists := sessions[sessionToken]
+	if !exists {
+		tmpl.ExecuteTemplate(w, "login.html", nil)
+		// w.WriteHeader(http.StatusUnauthorized)
+	}
+
+	if userSession.isExpired() {
+		delete(sessions, sessionToken)
+		tmpl.ExecuteTemplate(w, "login.html", "Login expired")
+		return
+	} else {
+		fmt.Println("Home Loaded")
+		tmpl.ExecuteTemplate(w, "index.html", user)
+		return
+	}
+
 }
 
 func getLogin(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Login Loaded")
-	tmpl.ExecuteTemplate(w, "login.html", nil)
+	clearCache(w, r)
+
+	// Check if cookie exists
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			// w.WriteHeader(http.StatusUnauthorized)
+			fmt.Println(err)
+		}
+		tmpl.ExecuteTemplate(w, "login.html", nil)
+		// w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	sessionToken := c.Value
+
+	userSession, exists := sessions[sessionToken]
+	if !exists {
+		tmpl.ExecuteTemplate(w, "login.html", nil)
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
+	if userSession.isExpired() {
+		delete(sessions, sessionToken)
+		tmpl.ExecuteTemplate(w, "login.html", "Login expired")
+		return
+	} else {
+		fmt.Println("Login Loaded")
+		tmpl.ExecuteTemplate(w, "index.html", user)
+	}
+	// tmpl.ExecuteTemplate(w, "login.html", nil)
 }
 
 func getSignup(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Signup Loaded")
-	tmpl.ExecuteTemplate(w, "signup.html", nil)
+	clearCache(w, r)
+
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+		tmpl.ExecuteTemplate(w, "signup.html", nil)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	sessionToken := c.Value
+
+	userSession, exists := sessions[sessionToken]
+	if !exists {
+		fmt.Println("There is no Session, Signup Loaded")
+		tmpl.ExecuteTemplate(w, "signup.html", nil)
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
+	if userSession.isExpired() {
+		delete(sessions, sessionToken)
+		fmt.Println("SessionSignup Loaded")
+		tmpl.ExecuteTemplate(w, "signup.html", nil)
+		return
+	} else {
+		tmpl.ExecuteTemplate(w, "index.html", user)
+	}
+
 }
 
 func postSignup(w http.ResponseWriter, r *http.Request) {
+	clearCache(w, r)
+
+	token, expiry := createSession(user)
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   token,
+		Expires: expiry,
+	})
+
 	r.ParseForm()
 
 	user.Name = r.FormValue("name")
 	user.Email = r.Form.Get("email")
-	// user, ok := Users[r.Form.Get("email")]
-	// if ok {
-	// 	tmpl.ExecuteTemplate(w, "signup.html", "User already exist, Use another email")
-	// 	return
-	// }
+	_, ok := Users[r.Form.Get("email")]
+	if ok {
+		tmpl.ExecuteTemplate(w, "signup.html", "User already exist, Use another email")
+		return
+	}
 	hashedPwd := hashPassword(r.Form.Get("password"))
 	user.Password = hashedPwd
 	if user.Name == "" || user.Email == "" {
@@ -67,31 +193,65 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 	} else {
 		Users[user.Email] = user
 		fmt.Println(Users)
+
+		fmt.Println(user)
+		tmpl.ExecuteTemplate(w, "index.html", user)
 	}
 
-	fmt.Println(user)
-
-	tmpl.ExecuteTemplate(w, "index.html", user)
 }
 
 func postLogin(w http.ResponseWriter, r *http.Request) {
+	clearCache(w, r)
+
+	// Retreive data from form
 	r.ParseForm()
 
 	user, ok := Users[r.FormValue("email")]
 	if ok {
 		if user.Email != r.FormValue("email") {
 			tmpl.ExecuteTemplate(w, "login.html", "Enter a valid email")
-		} else if !checkPassword(r.FormValue("password")) {
+		} else if !comparePassword(r.FormValue("password")) {
 			tmpl.ExecuteTemplate(w, "login.html", "Incorrect Password")
 			return
 		}
+		// Session and Cookie created
+		token, expiry := createSession(user)
+		http.SetCookie(w, &http.Cookie{
+			Name:    "session_token",
+			Value:   token,
+			Expires: expiry,
+		})
 		tmpl.ExecuteTemplate(w, "index.html", user)
 	} else {
 		tmpl.ExecuteTemplate(w, "login.html", "User don't exist")
 	}
+
 }
 
 func postLogout(w http.ResponseWriter, r *http.Request) {
+	clearCache(w, r)
+
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		tmpl.ExecuteTemplate(w, "login.html", "Login to see home")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	sessionToken := c.Value
+
+	delete(sessions, sessionToken)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   "",
+		Expires: time.Now(),
+	})
+
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
@@ -107,6 +267,7 @@ func main() {
 	mux.Handle("/view/static/", http.StripPrefix("/view/static/", http.FileServer(http.Dir("view/static/"))))
 
 	mux.HandleFunc("/", getHome)
+	fmt.Println("at Home")
 	mux.HandleFunc("/login", getLogin)
 	mux.HandleFunc("/login-post", postLogin)
 	mux.HandleFunc("/signup", getSignup)
