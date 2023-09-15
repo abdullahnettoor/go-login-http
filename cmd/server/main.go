@@ -37,10 +37,12 @@ var sessions = map[string]session{}
 func createSession(u User) (sessionToken string, expiresAt time.Time) {
 	sessionToken = uuid.NewString()
 	expiresAt = time.Now().Add(time.Hour)
+	fmt.Println("\nSession :", sessions)
 	sessions[sessionToken] = session{
 		username: u.Name,
 		expiry:   expiresAt,
 	}
+	fmt.Println("\nSession Created:", sessions[sessionToken])
 	return
 }
 
@@ -93,7 +95,7 @@ func getHome(w http.ResponseWriter, r *http.Request) {
 		tmpl.ExecuteTemplate(w, "login.html", "Login expired")
 		return
 	} else {
-		fmt.Println("Home Loaded")
+		fmt.Println("\nGET Home Loaded", user)
 		tmpl.ExecuteTemplate(w, "index.html", user)
 		return
 	}
@@ -107,7 +109,7 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if err == http.ErrNoCookie {
-			// w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Println(err)
 		}
 		tmpl.ExecuteTemplate(w, "login.html", nil)
@@ -128,10 +130,9 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 		tmpl.ExecuteTemplate(w, "login.html", "Login expired")
 		return
 	} else {
-		fmt.Println("Login Loaded")
+		fmt.Println("\nHome : GET Login")
 		tmpl.ExecuteTemplate(w, "index.html", user)
 	}
-	// tmpl.ExecuteTemplate(w, "login.html", nil)
 }
 
 func getSignup(w http.ResponseWriter, r *http.Request) {
@@ -158,10 +159,10 @@ func getSignup(w http.ResponseWriter, r *http.Request) {
 
 	if userSession.isExpired() {
 		delete(sessions, sessionToken)
-		fmt.Println("SessionSignup Loaded")
 		tmpl.ExecuteTemplate(w, "signup.html", nil)
 		return
 	} else {
+		fmt.Println("\nHome : GET Signup", user)
 		tmpl.ExecuteTemplate(w, "index.html", user)
 	}
 
@@ -169,13 +170,6 @@ func getSignup(w http.ResponseWriter, r *http.Request) {
 
 func postSignup(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
-
-	token, expiry := createSession(user)
-	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   token,
-		Expires: expiry,
-	})
 
 	r.ParseForm()
 
@@ -194,7 +188,15 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 		Users[user.Email] = user
 		fmt.Println(Users)
 
-		fmt.Println(user)
+		// Session and Cookie created
+		token, expiry := createSession(Users[user.Email])
+		http.SetCookie(w, &http.Cookie{
+			Name:    "session_token",
+			Value:   token,
+			Expires: expiry,
+		})
+
+		fmt.Println("\nHome : POST Signup", user)
 		tmpl.ExecuteTemplate(w, "index.html", user)
 	}
 
@@ -210,6 +212,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		if user.Email != r.FormValue("email") {
 			tmpl.ExecuteTemplate(w, "login.html", "Enter a valid email")
+			return
 		} else if !comparePassword(r.FormValue("password")) {
 			tmpl.ExecuteTemplate(w, "login.html", "Incorrect Password")
 			return
@@ -222,6 +225,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 			Expires: expiry,
 		})
 		tmpl.ExecuteTemplate(w, "index.html", user)
+		fmt.Println("Home Loaded", user)
 	} else {
 		tmpl.ExecuteTemplate(w, "login.html", "User don't exist")
 	}
@@ -233,9 +237,9 @@ func postLogout(w http.ResponseWriter, r *http.Request) {
 
 	c, err := r.Cookie("session_token")
 	if err != nil {
+		fmt.Println("\nPOST Logout", user)
 		if err == http.ErrNoCookie {
 			w.WriteHeader(http.StatusUnauthorized)
-			return
 		}
 		tmpl.ExecuteTemplate(w, "login.html", "Login to see home")
 		w.WriteHeader(http.StatusBadRequest)
@@ -244,13 +248,18 @@ func postLogout(w http.ResponseWriter, r *http.Request) {
 
 	sessionToken := c.Value
 
+	fmt.Println("\nSessions :", sessions)
+	fmt.Println("\nDeleted Session :", sessions[sessionToken])
 	delete(sessions, sessionToken)
+	fmt.Println("\nSessions After:", sessions)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   "",
 		Expires: time.Now(),
 	})
+
+	fmt.Println("\nUsers:", Users)
 
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
@@ -267,7 +276,6 @@ func main() {
 	mux.Handle("/view/static/", http.StripPrefix("/view/static/", http.FileServer(http.Dir("view/static/"))))
 
 	mux.HandleFunc("/", getHome)
-	fmt.Println("at Home")
 	mux.HandleFunc("/login", getLogin)
 	mux.HandleFunc("/login-post", postLogin)
 	mux.HandleFunc("/signup", getSignup)
