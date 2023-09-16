@@ -59,7 +59,7 @@ func hashPassword(password string) string {
 
 }
 
-func comparePassword(password string) bool {
+func comparePassword(password string, user User) bool {
 	v := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if v == nil {
 		return true
@@ -213,7 +213,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 		if user.Email != r.FormValue("email") {
 			tmpl.ExecuteTemplate(w, "login.html", "Enter a valid email")
 			return
-		} else if !comparePassword(r.FormValue("password")) {
+		} else if !comparePassword(r.FormValue("password"), user) {
 			tmpl.ExecuteTemplate(w, "login.html", "Incorrect Password")
 			return
 		}
