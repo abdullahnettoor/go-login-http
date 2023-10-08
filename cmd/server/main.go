@@ -11,18 +11,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// User Model
 type User struct {
 	Name     string
 	Email    string
 	Password string
 }
 
+// Created Users map to store multiple users
 var Users map[string]User
 
 var user User
 
 var tmpl *template.Template
 
+// Session Model
 type session struct {
 	username string
 	expiry   time.Time
@@ -32,8 +35,10 @@ func (s session) isExpired() bool {
 	return s.expiry.Before(time.Now())
 }
 
+// Created Sessions map to store multiple sessions
 var sessions = map[string]session{}
 
+// Function to Create Session
 func createSession(u User) (sessionToken string, expiresAt time.Time) {
 	sessionToken = uuid.NewString()
 	expiresAt = time.Now().Add(time.Hour)
@@ -46,19 +51,21 @@ func createSession(u User) (sessionToken string, expiresAt time.Time) {
 	return
 }
 
+// Function to Clear Browser Cache
 func clearCache(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache, no-store, no-transform, must-revalidate, private, max-age=0")
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("X-Accel-Expires", "0")
-
 }
 
+// Function to generate salted password
 func hashPassword(password string) string {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashed)
 
 }
 
+// Function to compare the password with hashed on
 func comparePassword(password string, user User) bool {
 	v := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if v == nil {
@@ -68,6 +75,7 @@ func comparePassword(password string, user User) bool {
 	}
 }
 
+// Handler Function to load home
 func getHome(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
@@ -87,7 +95,7 @@ func getHome(w http.ResponseWriter, r *http.Request) {
 	userSession, exists := sessions[sessionToken]
 	if !exists {
 		tmpl.ExecuteTemplate(w, "login.html", nil)
-		// w.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 
 	if userSession.isExpired() {
@@ -102,6 +110,7 @@ func getHome(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Handler Function to load login
 func getLogin(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
@@ -113,7 +122,6 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 		tmpl.ExecuteTemplate(w, "login.html", nil)
-		// w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -135,9 +143,11 @@ func getLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Handler Function to load Signup
 func getSignup(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
+	// Check if cookie exists
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -168,6 +178,7 @@ func getSignup(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Handler Function to Create user
 func postSignup(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
@@ -202,8 +213,21 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Handler Function to validate user when login
 func postLogin(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
+
+	_, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+		tmpl.ExecuteTemplate(w, "login.html", nil)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	} else {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	}
 
 	// Retreive data from form
 	r.ParseForm()
@@ -232,6 +256,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Handler Function to logout
 func postLogout(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
@@ -275,6 +300,7 @@ func main() {
 	// Get Static files like CSS, Images etc...
 	mux.Handle("/view/static/", http.StripPrefix("/view/static/", http.FileServer(http.Dir("view/static/"))))
 
+	// Routes
 	mux.HandleFunc("/", getHome)
 	mux.HandleFunc("/login", getLogin)
 	mux.HandleFunc("/login-post", postLogin)
