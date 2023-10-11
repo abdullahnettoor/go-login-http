@@ -232,8 +232,9 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	// Retreive data from form
 	r.ParseForm()
 
-	user, ok := Users[r.FormValue("email")]
-	if ok {
+	// Check if user with entered email exist
+	user, exist := Users[r.FormValue("email")]
+	if exist {
 		if user.Email != r.FormValue("email") {
 			tmpl.ExecuteTemplate(w, "login.html", "Enter a valid email")
 			return
@@ -260,6 +261,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 func postLogout(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
+	// Check if Cookie exist
 	c, err := r.Cookie("session_token")
 	if err != nil {
 		fmt.Println("\nPOST Logout", user)
@@ -271,13 +273,17 @@ func postLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get Session Token from Cookie
 	sessionToken := c.Value
 
 	fmt.Println("\nSessions :", sessions)
 	fmt.Println("\nDeleted Session :", sessions[sessionToken])
+
+	// Delete Session from Session Map
 	delete(sessions, sessionToken)
 	fmt.Println("\nSessions After:", sessions)
 
+	// Set Cookie value as Empty string
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   "",
@@ -286,6 +292,7 @@ func postLogout(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("\nUsers:", Users)
 
+	// Redirect to Login
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
