@@ -31,6 +31,7 @@ type session struct {
 	expiry   time.Time
 }
 
+// Check if session is expired or not
 func (s session) isExpired() bool {
 	return s.expiry.Before(time.Now())
 }
