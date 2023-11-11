@@ -218,18 +218,6 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 func postLogin(w http.ResponseWriter, r *http.Request) {
 	clearCache(w, r)
 
-	_, err := r.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			w.WriteHeader(http.StatusUnauthorized)
-		}
-		tmpl.ExecuteTemplate(w, "login.html", nil)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	} else {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-	}
-
 	// Retreive data from form
 	r.ParseForm()
 
